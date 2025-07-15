@@ -22,6 +22,27 @@ def ModelE_convert(path,output_filename,verbose=False):
     ######################################################
     if '20200313' in output_filename:
         start_dtime = '2020-03-12 22:00:00.0'
+    if '20200409' in output_filename:
+        start_dtime = '2020-04-08 11:00:00.0'
+    if '20200425' in output_filename:
+        start_dtime = '2020-04-24 15:00:00.0'
+    if '20200507' in output_filename:
+        start_dtime = '2020-05-06 08:00:00.0'
+    if '20200512' in output_filename:
+        start_dtime = '2020-05-11 08:00:00.0'
+        
+    if '20200301' in output_filename:
+        start_dtime = '2020-03-01 11:00:00.0'
+    if '20210203' in output_filename:
+        start_dtime = '2021-02-03 13:00:00.0'
+    if '20220111' in output_filename:
+        start_dtime = '2022-01-11 10:00:00.0'
+    if '20220118' in output_filename:
+        start_dtime = '2022-01-18 12:00:00.0'
+    if '20220313' in output_filename:
+        start_dtime = '2022-03-13 08:00:00.0'
+    if '20220329' in output_filename:
+        start_dtime = '2022-03-29 12:00:00.0'
     
     # specify simulation
     my_input_suffix = path             #*.nc
@@ -69,6 +90,18 @@ def ModelE_convert(path,output_filename,verbose=False):
     modele_data = modele_data.assign(dq_micro = dummy_snd + modele_data['dq_ss'].data + modele_data['dq_mc'].data)
     modele_data = modele_data.assign(wqt_turb = dummy_snd + modele_data['wq_turb'].data + modele_data['wql_turb'].data + modele_data['wqi_turb'].data)
 
+    ## new: compute condensate-weighted CDNC
+    nd_conv_fix = 60.
+    
+    Ntim = len(modele_data['time'])
+    Nlev = len(modele_data['p'])
+    
+    rhodz = -1.*np.diff(modele_data['p'],append=0)/9.81
+    rhodztile = np.tile(rhodz,(Ntim,1)).reshape(Ntim,Nlev,1,1)
+    new_var = (((modele_data['nclic'].data * modele_data['qcl'].data) + (nd_conv_fix * modele_data['QCLmc'].data)) * rhodztile).sum(axis=1) / ((modele_data['qcl'].data + modele_data['QCLmc'].data) * rhodztile).sum(axis=1)
+    new_var = np.nan_to_num(new_var)
+
+    modele_data = modele_data.assign(nqc = dummy_sca + new_var)
     #Prepare output file in DEPHY format
     # read list of requested variables
     
@@ -97,12 +130,12 @@ def ModelE_convert(path,output_filename,verbose=False):
             vars_mean_list.model_name.iat[index] = 'gtempr'
         if standard_name=='surface_friction_velocity': 
             vars_mean_list.model_name.iat[index] = 'ustar'
-    #    if standard_name=='surface_roughness_length_for_momentum_in_air': 
-    #        vars_mean_list.model_name.iat[index] = 'z0m'
-    #    if standard_name=='surface_roughness_length_for_heat_in_air': 
-    #        vars_mean_list.model_name.iat[index] = 'z0h'
-    #    if standard_name=='surface_roughness_length_for_humidity_in_air': 
-    #        vars_mean_list.model_name.iat[index] = 'z0q'
+        if standard_name=='surface_roughness_length_for_momentum_in_air': 
+            vars_mean_list.model_name.iat[index] = 'z0m_ocn'
+        if standard_name=='surface_roughness_length_for_heat_in_air': 
+            vars_mean_list.model_name.iat[index] = 'z0h_ocn'
+        if standard_name=='surface_roughness_length_for_humidity_in_air': 
+            vars_mean_list.model_name.iat[index] = 'z0q_ocn'
         if standard_name=='surface_upward_sensible_heat_flux': 
             vars_mean_list.model_name.iat[index] = 'shflx'
             vars_mean_list.conv_factor.iat[index] = -1.
@@ -135,6 +168,8 @@ def ModelE_convert(path,output_filename,verbose=False):
             vars_mean_list.model_name.iat[index] = 'tau'
     #    if standard_name=='optical_depth_of_liquid_water': 
     #        vars_mean_list.model_name.iat[index] = ''
+        if standard_name=='condensate_weighted_cloud_droplet_number_concentration': 
+            vars_mean_list.model_name.iat[index] = 'nqc'
         if standard_name=='precipitation_flux_at_surface': 
             vars_mean_list.model_name.iat[index] = 'prec'
             vars_mean_list.conv_factor.iat[index] = 1./86400
@@ -249,6 +284,8 @@ def ModelE_convert(path,output_filename,verbose=False):
                 vars_mean_list.model_name.iat[index] = 'QPImc'
         if standard_name=='number_of_liquid_cloud_droplets_in_air_stratiform': 
             vars_mean_list.model_name.iat[index] = 'ncl'
+        if standard_name=='number_of_liquid_cloud_droplets_in_cloud_stratiform': 
+            vars_mean_list.model_name.iat[index] = 'nclic'
         if standard_name=='number_of_rain_drops_in_air_stratiform': 
             vars_mean_list.model_name.iat[index] = 'npl'
         if do_ice:
@@ -256,6 +293,8 @@ def ModelE_convert(path,output_filename,verbose=False):
                 vars_mean_list.model_name.iat[index] = 'nci'
             if standard_name=='number_of_ice_precipitation_crystals_in_air_stratiform': 
                 vars_mean_list.model_name.iat[index] = 'npi'
+            if standard_name=='number_of_ice_crystals_in_cloud_stratiform':
+                vars_mean_list.model_name.iat[index] = 'nciic'
         if standard_name=='effective_radius_of_liquid_cloud_droplets_convective': 
             vars_mean_list.model_name.iat[index] = 're_mccl'
         if standard_name=='effective_radius_of_rain_convective': 
@@ -309,21 +348,26 @@ def ModelE_convert(path,output_filename,verbose=False):
         os.remove(dephy_filename)
         print('The file ' + dephy_filename + ' has been deleted successfully')    
     dephy_file = Dataset(dephy_filename,mode='w',format='NETCDF3_CLASSIC')
-    start_date = '2020-03-12T22:00:00Z'
+    start_date = start_dtime.replace(' ','T')[0:19] + 'Z' #'2020-03-12T22:00:00Z'
 
     # create global attributes
-    dephy_file.title='ModelE3 SCM results for COMBLE-MIP case: fixed stratiform Nd and Ni'
-    dephy_file.reference='https://github.com/ARM-Development/comble-mip'
+    add_info = 'prognostic stratiform Nd from fixed monomodal aerosol'
+    if not do_ice:
+        add_info = add_info + ', liquid-only'
+    else:
+        add_info = add_info + ', mixed-phase'
+    dephy_file.title='ModelE3 SCM results for case ' + output_filename + ' (' + add_info + ')'#COMBLE-MIP case: fixed stratiform Nd and Ni'
+    dephy_file.reference='https://github.com/NASA-GISS/LES-SCM'
     dephy_file.authors='Ann Fridlind (ann.fridlind@nasa.gov), Florian Tornow (florian.tornow@nasa.gov), Andrew Ackerman (andrew.ackerman@nasa.gov)'
     dephy_file.source=input_filename
     dephy_file.version=dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     dephy_file.format_version='DEPHY SCM format version 1.6'
-    dephy_file.script='convert_ModelE3_SCM_output_to_dephy_format.ipynb'
+    dephy_file.script='ModelE_output_conversion.ipynb' #convert_ModelE3_SCM_output_to_dephy_format.ipynb'
     dephy_file.startDate=start_date
     dephy_file.force_geo=1
     dephy_file.surfaceType='ocean'
     dephy_file.surfaceForcing='ts'
-    dephy_file.lat='74.5 deg N'
+    dephy_file.lat=str(modele_data['lat'].data[0]) + ' deg N'#'74.5 deg N'
     dephy_file.dp='see pressure variable'
     dephy_file.np=modele_data.sizes['p']
 

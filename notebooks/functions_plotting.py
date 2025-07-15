@@ -18,6 +18,48 @@ from math import log10, floor, isnan
 ## Tim Juliano: tjuliano@ucar.edu
 ## Ann Fridlind: ann.fridlind@nasa.gov
 
+def toffset(case):
+    
+    if case == '20200313':
+        t_off = 18.
+    if case == '20200409':
+        t_off = 31.
+    if case == '20200425':
+        t_off = 21.
+    if case == '20200507':
+        t_off = 28.
+    if case == '20200512':
+        t_off = 29.
+    if case == '20200301':
+        t_off = 9. #11.
+    if case == '20210203':
+        t_off = 13.
+    if case == '20220111':
+        t_off = 10.
+    if case == '20220118':
+        t_off = 2.
+    if case == '20220313':
+        t_off = 6.
+    if case == '20220329':
+        t_off = 0.
+        
+    return t_off
+
+def timenear(case):
+    
+    if case == '20200313':
+        t_off = 18.
+    if case == '20200409':
+        t_off = 18.
+    if case == '20200425':
+        t_off = 12.
+    if case == '20200507':
+        t_off = 12.
+    if case == '20200512':
+        t_off = 13.
+        
+    return t_off
+
 def round_sig(x, sig=2):
     x_r = x.copy()
     for ii in range(len(x)):
@@ -44,18 +86,8 @@ def load_ceres(case='20200313',t_filter = 1.,PATH='../data_files/'):
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'ceres_2020-03-13_satdat.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'ceres_2020-04-09_satdat.csv'
-        t_off = 18.
-    if case == '20200425':
-        file = 'ceres_2020-04-25_satdat.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'ceres_2020-05-12_satdat.csv'
-        t_off = 13.
+    file = 'ceres_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -88,15 +120,8 @@ def load_calipso(case='20200313',t_filter = 1.,PATH='../data_files/'):
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'caliop_2020-03-13_satdat.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'caliop_2020-04-09_satdat.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'caliop_2020-05-12_satdat.csv'
-        t_off = 13.
+    file = 'caliop_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -135,9 +160,8 @@ def load_iwpgong(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_fi
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'gongiwp_2020-03-13_satdat2.csv'
-        t_off = 18.
+    file = 'gongiwp_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat2.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -162,9 +186,8 @@ def load_sentinel(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_f
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'sentinel_2020-03-13_satdat.csv'
-        t_off = 18.
+    file = 'sentinel_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -195,18 +218,8 @@ def load_viirs(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_file
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'viirs_2020-03-13_satdat.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'viirs_2020-04-09_satdat.csv'
-        t_off = 18.
-    if case == '20200425':
-        file = 'viirs_2020-04-25_satdat.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'viirs_2020-05-12_satdat.csv'
-        t_off = 13.  
+    file = 'viirs_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -235,11 +248,60 @@ def load_viirs(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_file
     #data['cod'] = data['cod.me']
     data['od'] = data['cod']
     data['od.25'] = data['cod.25']
-    data['od.75'] = data['cod.75']
+    data['od.75'] = data['cod.75']    
+    data['nqc'] = data['nd']
+    data['nqc.25'] = data['nd.25']
+    data['nqc.75'] = data['nd.75']
     data['clt'] = data['cc']
-    data['clt.25'] = data['cc.025']
-    data['clt.75'] = data['cc.975']
+    if 'cc.025' in data:
+        data['clt.25'] = data['cc.025']
+        data['clt.75'] = data['cc.975']
     data.index = data['time']
+     
+    data['class'] = data['sat']
+    return data
+
+def load_goes(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_files/'):
+    
+    ## load coincident MAC-LWP retrievals (Elsaesser et al., 2017)
+    ## __input__
+    ## case........string of COMBLE date
+    ## t_filter....time window around arrival of trajectory (hours)
+    ## PATH........directory
+    
+    file = 'goes_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
+    t_off = toffset(case)
+    
+    data = pd.read_csv(PATH + file)
+    
+    ## exclude greater temperoral offsets
+    data = data.loc[abs(data['tdiff']) <= t_filter]
+    
+    ## exclude highly uncertain data points
+    #data = data.loc[data['cod'].notna()]
+    data.loc[data['cod'].isna(),['cod','cod.25','cod.75','cc','cc.25','cc.75']] = np.nan 
+
+    
+    ## exclude bispectral retrievals under high SZA
+    data.loc[data['sza'] > sza_filter,['cod','cod.25','cod.75','cc','cc.25','cc.75']] = np.nan 
+
+    ## exclude values obtained during high-cloud influence
+    #data.loc[(data['time.rel'] + t_off) < 3,['ctt','cth']] = np.nan 
+    data.loc[data['cth'] > 8000,['ctt','cth']] = np.nan 
+    
+    data['time'] = (data['time.rel'] + t_off)*3600.
+    #data['cth'] = data['cth']*1000.
+    #data['zi.25'] = data['cth.25']
+    #data['zi.75'] = data['cth.75']
+    data.index = data['time']
+    #data['cod'] = data['cod.me']
+    #data['od'] = data['cod']
+    #data['od.25'] = data['cod.25']
+    #data['od.75'] = data['cod.75']
+    data['clt'] = data['cc']
+    if 'cc.025' in data:
+        data['clt.25'] = data['cc.025']
+        data['clt.75'] = data['cc.975']
      
     data['class'] = data['sat']
     return data
@@ -251,19 +313,9 @@ def load_modis(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_file
     ## case........string of COMBLE date
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
-    
-    if case == '20200313':
-        file = 'modis_2020-03-13_satdat.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'modis_2020-04-09_satdat.csv'
-        t_off = 18.
-    if case == '20200425':
-        file = 'modis_2020-04-25_satdat.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'modis_2020-05-12_satdat.csv'
-        t_off = 13.
+
+    file = 'modis_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -290,10 +342,14 @@ def load_modis(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_file
     #data['cod'] = data['cod.me']
     data['od'] = data['cod']
     data['od.25'] = data['cod.25']
-    data['od.75'] = data['cod.75']
+    data['od.75'] = data['cod.75']  
+    data['nqc'] = data['nd']
+    data['nqc.25'] = data['nd.25']
+    data['nqc.75'] = data['nd.75']
     data['clt'] = data['cc']
-    data['clt.25'] = data['cc.025']
-    data['clt.75'] = data['cc.975']
+    if 'cc.025' in data:
+        data['clt.25'] = data['cc.025']
+        data['clt.75'] = data['cc.975']
      
     data['class'] = data['sat']
     return data
@@ -306,18 +362,11 @@ def load_maclwp(case='20200313',t_filter = 1.,PATH='../data_files/'):
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
+    file = 'maclwp_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
     if case == '20200313':
         file = 'maclwp_2020-03-13_satdat3.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'maclwp_2020-04-09_satdat.csv'
-        t_off = 18.
-    if case == '20200425':
-        file = 'maclwp_2020-04-25_satdat.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'maclwp_2020-05-12_satdat.csv'
-        t_off = 13.
+    t_off = toffset(case)
+    
     
     data = pd.read_csv(PATH + file)
     data = data.loc[abs(data['tdiff']) <= t_filter]
@@ -339,7 +388,7 @@ def load_maclwp(case='20200313',t_filter = 1.,PATH='../data_files/'):
     data_mac['class'] = data_mac['sat']
     return data_mac
 
-def load_kazrkollias(case='20200313',t_filter = 1.,PATH='../data_files/',aux_dat=pd.DataFrame()):
+def load_activate_insitu(case='20200313',PATH='../data_files/'):
     
     ## load coincident MAC-LWP retrievals (Elsaesser et al., 2017)
     ## __input__
@@ -347,18 +396,143 @@ def load_kazrkollias(case='20200313',t_filter = 1.,PATH='../data_files/',aux_dat
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'kazr-kollias_2020-03-13_dat2.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'kazr-kollias_2020-04-09_dat2.csv'
-        t_off = 18.
-    if case == '20200425':
-        file = 'kazr-kollias_2020-04-25_dat2.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'kazr-kollias_2020-05-12_dat2.csv'
+    if case == '20200301':
+        file = 'activate_2020-03-01_satdat.csv'
+        t_off = 7. #11.
+    if case == '20210203':
+        file = 'goes_2021-02-03_satdat.csv'
         t_off = 13.
+    if case == '20220111':
+        file = 'goes_2022-01-11_satdat.csv'
+        t_off = 10.
+    if case == '20220118':
+        file = 'goes_2022-01-18_satdat.csv'
+        t_off = 2.
+    if case == '20220313':
+        file = 'goes_2022-03-13_satdat.csv'
+        t_off = 6.
+    if case == '20220329':
+        file = 'goes_2022-03-29_satdat.csv'
+        t_off = 0.
+    
+    data = pd.read_csv(PATH + file)
+    
+    data['time'] = data['sim.time.new']*3600.
+    data['zi'] = data['cth']
+    ata['zi.25'] = data['cth.low']
+    data['zi.75'] = data['cth.high']
+    data['ctt'] = data['ctt']
+    ata['ctt.25'] = data['ctt.low']
+    data['ctt.75'] = data['ctt.high']
+    data.index = data['time']
+    #data['cod'] = data['cod.me']
+    data['od'] = data['tau']
+    data['od.25'] = data['tau.low']
+    data['od.75'] = data['tau.high']
+     
+    data['class'] = data['sat']
+    return data
+
+def load_activate_dropsonde(case='20200313',PATH='../data_files/'):
+    
+    ## load coincident MAC-LWP retrievals (Elsaesser et al., 2017)
+    ## __input__
+    ## case........string of COMBLE date
+    ## t_filter....time window around arrival of trajectory (hours)
+    ## PATH........directory
+    
+    if case == '20200301':
+        file = 'activate_drop_2020-03-01_satdat.csv'
+        t_off = 9. #11.
+    if case == '20210203':
+        file = 'goes_2021-02-03_satdat.csv'
+        t_off = 13.
+    if case == '20220111':
+        file = 'goes_2022-01-11_satdat.csv'
+        t_off = 10.
+    if case == '20220118':
+        file = 'goes_2022-01-18_satdat.csv'
+        t_off = 2.
+    if case == '20220313':
+        file = 'goes_2022-03-13_satdat.csv'
+        t_off = 6.
+    if case == '20220329':
+        file = 'goes_2022-03-29_satdat.csv'
+        t_off = 0.
+    
+    data = pd.read_csv(PATH + file)
+    
+    data['time'] = np.round(data['time.sim'])*3600.
+    
+    data['zf'] = data['h']
+    data['qv'] = data['qv']/1000.
+    data['ua'] = data['u']
+    data['va'] = data['v']
+    data['ta'] = data['T'] + 273.15
+    data.index = data['time']
+     
+    data['class'] = data['sat']
+    return data
+
+    
+def load_activate_remote(case='20200313',PATH='../data_files/'):
+    
+    ## load coincident MAC-LWP retrievals (Elsaesser et al., 2017)
+    ## __input__
+    ## case........string of COMBLE date
+    ## t_filter....time window around arrival of trajectory (hours)
+    ## PATH........directory
+    
+    if case == '20200301':
+        file = 'activate2stat_2020-03-01_satdat.csv'
+        t_off = 9. #11.
+    if case == '20210203':
+        file = 'goes_2021-02-03_satdat.csv'
+        t_off = 13.
+    if case == '20220111':
+        file = 'goes_2022-01-11_satdat.csv'
+        t_off = 10.
+    if case == '20220118':
+        file = 'goes_2022-01-18_satdat.csv'
+        t_off = 2.
+    if case == '20220313':
+        file = 'goes_2022-03-13_satdat.csv'
+        t_off = 6.
+    if case == '20220329':
+        file = 'goes_2022-03-29_satdat.csv'
+        t_off = 0.
+    
+    data = pd.read_csv(PATH + file)
+    
+    data['time'] = data['sim.time.new']*3600.
+    data['zi'] = data['cth']
+    data['zi.25'] = data['cth.low']
+    data['zi.75'] = data['cth.high']
+    data['ctt'] = data['ctt']
+    data['ctt.25'] = data['ctt.low']
+    data['ctt.75'] = data['ctt.high']
+    data.index = data['time']
+    #data['cod'] = data['cod.me']
+    data['od'] = data['tau']
+    data['od.25'] = data['tau.low']
+    data['od.75'] = data['tau.high']
+    data['nd'] = data['Nd']
+    data['nd.25'] = data['Nd.low']
+    data['nd.75'] = data['Nd.high']
+     
+    data['class'] = data['sat']
+    return data
+
+def load_kazrkollias(case='20200313',t_filter = 1.,PATH='../data_files/',aux_dat=pd.DataFrame()):
+    
+    ## load coincident MAC-LWP retrievals (Elsaesser et al., 2017)
+    ## __input__
+    ## case........string of COMBLE date
+    ## t_filter....time window around arrival of trajectory (hours)
+    ## PATH........directory
+
+    file = 'kazr-kollias_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_dat2.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -394,18 +568,8 @@ def load_kazrclough(case='20200313',t_filter = 1.,PATH='../data_files/'):
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'kazr-clough_2020-03-13_dat2.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'kazr-clough_2020-04-09_dat2.csv'
-        t_off = 18.
-    if case == '20200425':
-        file = 'kazr-clough_2020-04-25_dat2.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'kazr-clough_2020-05-12_dat2.csv'
-        t_off = 13.
+    file = 'kazr-clough_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_dat2.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -426,18 +590,8 @@ def load_radflux(case='20200313',t_filter = 1.,PATH='../data_files/'):
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200313':
-        file = 'radflux_2020-03-13_dat2.csv'
-        t_off = 18.
-    if case == '20200409':
-        file = 'radflux_2020-04-09_dat2.csv'
-        t_off = 18.
-    if case == '20200425':
-        file = 'radflux_2020-04-25_dat2.csv'
-        t_off = 12.
-    if case == '20200512':
-        file = 'radflux_2020-05-12_dat2.csv'
-        t_off = 13.
+    file = 'radflux_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_dat2.csv'
+    t_off = toffset(case)
     
     data = pd.read_csv(PATH + file)
     
@@ -453,23 +607,14 @@ def load_radflux(case='20200313',t_filter = 1.,PATH='../data_files/'):
 
 def load_aeri(case='20200313',t_filter = 1.,PATH='../data_files/'):
     
-    if case == '20200313':
-        file = 'aeri_2020-03-13_dat.csv'
-        time_near = 18.
-    if case == '20200409':
-        file = 'aeri_2020-04-09_dat.csv'
-        time_near = 18.
-    if case == '20200425':
-        file = 'aeri_2020-04-25_dat.csv'
-        time_near = 12.
-    if case == '20200512':
-        file = 'aeri_2020-05-12_dat.csv'
-        time_near = 13.
+    file = 'aeri_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_dat.csv'
+    time_near = timenear(case)
+    time_sim = toffset(case)
     
     data = pd.read_csv(PATH + file)
     data = data.loc[abs(data['time.abs']/3600 - time_near) <= t_filter]
     
-    data['time'] = time_near*3600
+    data['time'] = time_sim*3600
     data['ta'] = data['temp'] + 273.15
     data['qv'] = data['qv']/1000
     data.index = data['time.abs']/3600
@@ -547,17 +692,9 @@ def load_rs(case='20200313',t_filter = 1.,PATH='../data_files/'):
     R_cp = 0.286 
     eps = 0.622
 
-    if case == '20200313':
-        time_near = 18.
-    if case == '20200409':
-        time_near = 18.
-    if case == '20200425':
-        time_near = 12.
-    if case == '20200507':
-        time_near = 12.
-    if case == '20200512':
-        time_near = 13.
-        
+    time_near = timenear(case)
+    time_sim = toffset(case)
+    
     NCFILES = list(direc.rglob('anx*cdf'))
     
     var_vec_1d = ['alt','pres','u_wind','v_wind','tdry','dp','rh']
@@ -588,11 +725,34 @@ def load_rs(case='20200313',t_filter = 1.,PATH='../data_files/'):
     rs_col = rs_col[abs(rs_col['time']/3600 - time_near) < t_filter]
 
     ## for plotting purposes
-    rs_col['time'] = time_near*3600.
+    rs_col['time'] = time_sim*3600.
     rs_col['ta'] = rs_col['temp'] + 273.15
 
     return rs_col
 
+
+def load_era5csv(case='20200301',PATH='../data_files/'):
+    
+    ## load ERA5 data along trajectory
+    ## __input__
+    ## case........string of COMBLE date
+    ## PATH........directory
+    
+    R_cp = 0.286 
+    file = PATH + 'era5_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_surf_flux.csv'
+    t_off = toffset(case)
+    
+    data = pd.read_csv(PATH + file)
+    #print(data)
+    data['time'] = (data['N'] + t_off)*3600.
+    data.index = data['time']
+    #time = data['time'][:]
+    
+    data['hfls'] = data['lhf']
+    data['hfss'] = data['shf']
+    data['ts'] = data['sst']
+    data['class'] = 'ERA5'
+    return data
 
 def load_era5(case='20200313',PATH='../data_files/'):
     
@@ -951,9 +1111,9 @@ def load_sims(path,var_vec_1d,var_vec_2d,t_shift = 0,keyword='',make_gray = 0,dr
             for vv in var_vec_1d:
                 if vv in ds.variables:
                     p_df[vv] = ds.variables[vv][t0:]
-                    if vv in ['z0','z0h','z0q']:
-                        if p_df[vv].isna().sum() == 0:
-                            p_df[vv] = round_sig(ds.variables[vv][t0:].tolist(),1)  
+                    #if vv in ['z0','z0h','z0q']:
+                    #    if p_df[vv].isna().sum() == 0:
+                    #       p_df[vv] = round_sig(ds.variables[vv][t0:].tolist(),1)  
                     if p_df[vv].isna().sum() > 0: print(vv + ' shows NAN values in ' + str(fn))  
                 else:
                     print(vv + ' not found in ' + str(fn))
@@ -1004,6 +1164,7 @@ def load_sims(path,var_vec_1d,var_vec_2d,t_shift = 0,keyword='',make_gray = 0,dr
                 #print(ds.variables['zf'][t0:,ii])
                 #print(p_df2)
                 for vv in var_vec_2d:
+                    #print(vv)
                     if vv in ds.variables:
                         #if ii==0: 
                         #    print(vv)
@@ -1071,7 +1232,7 @@ def load_sims(path,var_vec_1d,var_vec_2d,t_shift = 0,keyword='',make_gray = 0,dr
                         theta_step = df_sub2.loc[df_sub2['time'] == tt,['zf','theta','qlc','qlr','qic','qis','qig','qv']]
                         theta_step['qic'] = theta_step['qic'].fillna(0)
                         theta_step['qis'] = theta_step['qis'].fillna(0)
-                        theta_step['qig'] = theta_step['qig'].fillna(0)
+                        theta_step['qig'] = theta_step['qig'].fillna(0)                         
                         theta_step['theta'] = theta_step['theta'] - lv/cp*(theta_step['qlc'] + theta_step['qlr']) - li/cp*(theta_step['qic']+theta_step['qis']+theta_step['qig'])
                         theta_step['qcond_tot'] = theta_step['qlc'] + theta_step['qlr'] + theta_step['qic']+theta_step['qis']+theta_step['qig']
                         theta_step['q_tot'] = theta_step['qlc'] + theta_step['qlr'] + theta_step['qic']+theta_step['qis']+theta_step['qig']+theta_step['qv']
@@ -1083,6 +1244,11 @@ def load_sims(path,var_vec_1d,var_vec_2d,t_shift = 0,keyword='',make_gray = 0,dr
                         theta_step['q_tot'] = theta_step['qlc'] + theta_step['qlr'] + theta_step['qi'] + theta_step['qv']
                     elif(('qlc' in df_sub2.columns) & ('qics' in df_sub2.columns)): 
                         theta_step = df_sub2.loc[df_sub2['time'] == tt,['zf','theta','qlc','qlr','qics','qicc','qipc','qips','qv']]
+                        if 'qicc' in df_sub2.columns:                        
+                            theta_step['qicc'] = theta_step['qicc'].fillna(0)
+                            theta_step['qics'] = theta_step['qics'].fillna(0)
+                            theta_step['qips'] = theta_step['qips'].fillna(0)
+                            theta_step['qipc'] = theta_step['qipc'].fillna(0)   
                         theta_step['theta'] = theta_step['theta'] - lv/cp*(theta_step['qlc'] + theta_step['qlr']) - li/cp*(theta_step['qics'] + theta_step['qicc'] + theta_step['qips'] + theta_step['qipc'])
                         theta_step['qcond_tot'] = theta_step['qlc'] + theta_step['qlr'] + theta_step['qics'] + theta_step['qicc'] + theta_step['qips'] + theta_step['qipc']
                         theta_step['q_tot'] = theta_step['qlc'] + theta_step['qlr'] + theta_step['qics'] + theta_step['qicc'] + theta_step['qips'] + theta_step['qipc'] + theta_step['qv']
@@ -1203,12 +1369,14 @@ def plot_1d(df_col,var_vec,**kwargs):
     ######## SET KWARGS ########
     ############################
     if 't1' not in kwargs:
-        t1 = 18.
+        #t1 = 18.
+        t1 = (df_col[df_col['colflag']=='col'])['time'].max()/3600.
     else:
-        t1 = kwargs.get('t1')
+        t1 = kwargs.get('t1')/3600.
     
     if 't0' not in kwargs:
-        t0 = -2.
+        #t0 = -2.
+        t0 = 0. #min(df_col['time'])
     else:
         t0 = kwargs.get('t0')
     
@@ -1267,11 +1435,11 @@ def plot_1d(df_col,var_vec,**kwargs):
                 obj = axs
             else:
                 obj = axs[ii]
-            if (label=='MAC-LWP') | (label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX') | (label=='Bulk') | (label=='ECOR')| (label=='CARRA'):
+            if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') | (label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX') | (label=='Bulk') | (label=='ECOR')| (label=='CARRA'):
                 obj.scatter(df.time/3600,df[var_vec[ii]],label=label,c='k',marker=plot_symbol[counter_symbol])
                 #print(label)
                 #print(df[var_vec[ii]])
-                if (label=='MAC-LWP') | (label=='VIIRS') | (label=='MODIS') | (label=='CERES')| (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA'):
+                if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') |(label=='VIIRS') | (label=='MODIS') | (label=='CERES')| (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA'):
                     if np.count_nonzero(np.isnan(df[var_vec[ii]])) < len(df[var_vec[ii]]):
                         error_1 = np.abs(df[var_vec[ii]] - df[var_vec[ii]+'.25'])
                         error_2 = np.abs(df[var_vec[ii]+'.75'] - df[var_vec[ii]])
@@ -1301,7 +1469,7 @@ def plot_1d(df_col,var_vec,**kwargs):
                     obj.text(.01, .99, longnames[ii]+unit_str, ha='left', va='top', transform=obj.transAxes)
         counter +=1
         if not df['colflag'].unique() == 'gray':  counter_plot +=1
-        if (label=='MAC-LWP') | (label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA') | (label=='ERA5'): counter_plot -=1    
+        if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') |(label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA') | (label=='ERA5'): counter_plot -=1    
         #print(counter_plot)
     i_count = 0
 
@@ -1501,7 +1669,7 @@ def plot_2d(df_col2,var_vec,times,**kwargs):
             else:
                 counter_plot = 0
                 counter_lty  = 0
-            if (t_ave > 0.0) & (label[0:4] not in ['ERA5','Radi','AERI']):
+            if (t_ave > 0.0) & (label[0:4] not in ['ERA5','Radi','AERI','ACTIVATE (dropsonde)']):
                 #if tt==0:
                 #    print(label)
                 #    print(len(df['zf'].unique()))
@@ -1546,6 +1714,7 @@ def plot_2d(df_col2,var_vec,times,**kwargs):
                     #pline = 'solid'
                     if(label=='ERA5'): pcol='black'
                     if(label=='AERI'): pcol='pink'
+                    if(label=='ACTIVATE (dropsonde)'): pcol='black'
                     if(label[0:5]=='Radio'): 
                         pcol='grey'
                         pline=plot_ls[counter_line]
@@ -1584,7 +1753,7 @@ def plot_2d(df_col2,var_vec,times,**kwargs):
                 
                 counter +=1
             if not df['colflag'].unique() == 'gray': counter_col +=1
-            if (label=='ERA5') or (label[0:5]=='Radio') or (label[0:5]=='AERI'): counter_col -=1
+            if (label=='ERA5') or (label[0:5]=='Radio') or (label[0:5]=='AERI') or (label[0:5]=='ACTIV'): counter_col -=1
             if label[0:5]=='Radio': counter_line +=1
     
     

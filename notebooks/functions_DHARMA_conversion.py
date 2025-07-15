@@ -12,7 +12,7 @@ import sys
 ## Specify directory locations
 
 
-def DHARMA_convert(path,output_filename,verbose=False):
+def DHARMA_convert(path,output_filename,verbose=False,time_resample='600s'):
 
     ## translated from COMBLE notebook written by Ann Fridlind (https://github.com/ARM-Development/comble-mip/blob/main/notebooks/conversion_output/convert_DHARMA_LES_output_to_dephy_format.ipynb)
 
@@ -26,8 +26,25 @@ def DHARMA_convert(path,output_filename,verbose=False):
         start_dtime = '2020-04-08 11:00:00.0'
     if '20200425' in output_filename:
         start_dtime = '2020-04-24 15:00:00.0'
+    if '20200507' in output_filename:
+        start_dtime = '2020-05-06 08:00:00.0'
     if '20200512' in output_filename:
         start_dtime = '2020-05-11 08:00:00.0'
+        
+    if '20200301' in output_filename:
+        start_dtime = '2020-03-01 11:00:00.0'
+    if '20210203' in output_filename:
+        start_dtime = '2021-02-03 13:00:00.0'
+    if '20220111' in output_filename:
+        start_dtime = '2022-01-11 10:00:00.0'
+    if '20220118' in output_filename:
+        start_dtime = '2022-01-18 12:00:00.0'
+    if '20220313' in output_filename:
+        start_dtime = '2022-03-13 08:00:00.0'
+    if '20220329' in output_filename:
+        start_dtime = '2022-03-29 12:00:00.0'
+
+    print(start_dtime)
     
     # FixN with no ice test
     my_readdir = path
@@ -60,6 +77,12 @@ def DHARMA_convert(path,output_filename,verbose=False):
     if verbose:
         print('do_progNa = ',do_progNa)
 
+    # check for number of aerosol modes
+    if do_progNa:
+        num_progNa = bool(dharma_params['Cond'].aer_modes)
+        if verbose:
+            print('num_progNa = ',num_progNa)
+    
     # full parameter list
     if verbose:
         dharma_params
@@ -76,11 +99,11 @@ def DHARMA_convert(path,output_filename,verbose=False):
         if index==0:
             dharma_snds = xr.open_dataset(input_filename)
             dharma_snds['time'] = pd.to_datetime(dharma_snds['time'].values, unit='s', origin=pd.Timestamp(start_dtime))
-            dharma_snds = dharma_snds.resample(time="600s",closed="right",label="right").mean()
+            dharma_snds = dharma_snds.resample(time=time_resample,closed="right",label="right").mean()
         else:
             dharma_snds2 = xr.open_dataset(input_filename)
             dharma_snds2['time'] = pd.to_datetime(dharma_snds2['time'].values, unit='s', origin=pd.Timestamp(start_dtime))
-            dharma_snds2 = dharma_snds2.resample(time="600s",closed="right",label="right").mean()
+            dharma_snds2 = dharma_snds2.resample(time=time_resample,closed="right",label="right").mean()
             dharma_snds = xr.concat([dharma_snds,dharma_snds2],dim='time')
     dharma_snds = dharma_snds.drop_duplicates('time',keep='first')
     
@@ -122,7 +145,12 @@ def DHARMA_convert(path,output_filename,verbose=False):
         PFqif = dharma_snds['PFqif'].data 
         PFqid = dharma_snds['PFqid'].data 
     if do_progNa:
-        ssa_sfc = (dharma_snds['Sna_1_sfc'].data[:,0]+dharma_snds['Sna_2_sfc'].data[:,0]+dharma_snds['Sna_3_sfc'].data[:,0])*dharma_snds['zw'].data[1]
+        #ssa_sfc = (dharma_snds['Sna_1_sfc'].data[:,0]+dharma_snds['Sna_2_sfc'].data[:,0]+dharma_snds['Sna_3_sfc'].data[:,0])*dharma_snds['zw'].data[1]
+        ssa_sfc = dharma_snds['Sna_1_sfc'].data[:,0]*dharma_snds['zw'].data[1]
+        if num_progNa>1:
+            ssa_sfc = ssa_sfc + dharma_snds['Sna_2_sfc'].data[:,0]*dharma_snds['zw'].data[1]
+        if num_progNa>2:
+            ssa_sfc = ssa_sfc + dharma_snds['Sna_3_sfc'].data[:,0]*dharma_snds['zw'].data[1]
     Flwd = dharma_snds['Flw_dn'].data
     Flwu = dharma_snds['Flw_up'].data
     Fnlw = Flwu - Flwd
@@ -171,9 +199,16 @@ def DHARMA_convert(path,output_filename,verbose=False):
     dharma_snds = dharma_snds.assign(dq_turb = dummy_snd + (dharma_snds['qqz_tot'].data[:,0:nz] - dharma_snds['qqz_tot'].data[:,1:nz+1])/dz)
 
     if do_progNa:
-        dharma_snds = dharma_snds.assign(na_loss_liq = dummy_snd + dharma_snds['na_loss_prof'].data - dharma_snds['na_loss_ice'].data)
-        dharma_snds = dharma_snds.assign(dna_mixing = dummy_snd + dharma_snds['Sna_1_adv'].data + dharma_snds['Sna_2_adv'].data + dharma_snds['Sna_3_adv'].data + 
-                                dharma_snds['Sna_1_sfc'].data + dharma_snds['Sna_2_sfc'].data + dharma_snds['Sna_3_sfc'].data)
+        if do_ice:
+            dharma_snds = dharma_snds.assign(na_loss_liq = dummy_snd + dharma_snds['na_loss_prof'].data - dharma_snds['na_loss_ice'].data)
+        #dharma_snds = dharma_snds.assign(dna_mixing = dummy_snd + dharma_snds['Sna_1_adv'].data + dharma_snds['Sna_2_adv'].data + dharma_snds['Sna_3_adv'].data + 
+                                #dharma_snds['Sna_1_sfc'].data + dharma_snds['Sna_2_sfc'].data + dharma_snds['Sna_3_sfc'].data)
+        dharma_dnamix = dharma_snds['Sna_1_adv'].data + dharma_snds['Sna_1_sfc'].data 
+        if num_progNa>1:
+            dharma_dnamix = dharma_dnamix + dharma_snds['Sna_2_adv'].data + dharma_snds['Sna_2_sfc'].data 
+        if num_progNa>2:
+            dharma_dnamix = dharma_dnamix + dharma_snds['Sna_3_adv'].data + dharma_snds['Sna_3_sfc'].data 
+        dharma_snds = dharma_snds.assign(dna_mixing = dummy_snd + dharma_dnamix)
 
     if verbose:
         dharma_snds
@@ -188,11 +223,11 @@ def DHARMA_convert(path,output_filename,verbose=False):
         if index==0:
             dharma_scas = xr.open_dataset(input_filename)
             dharma_scas['time'] = pd.to_datetime(dharma_scas['time'].values, unit='s', origin=pd.Timestamp(start_dtime))
-            dharma_scas = dharma_scas.resample(time="600s",closed="right",label="right").mean()
+            dharma_scas = dharma_scas.resample(time=time_resample,closed="right",label="right").mean()
         else:
             dharma_scas2 = xr.open_dataset(input_filename)
             dharma_scas2['time'] = pd.to_datetime(dharma_scas2['time'].values, unit='s', origin=pd.Timestamp(start_dtime))
-            dharma_scas2 = dharma_scas2.resample(time="600s",closed="right",label="right").mean()
+            dharma_scas2 = dharma_scas2.resample(time=time_resample,closed="right",label="right").mean()
             dharma_scas = xr.concat([dharma_scas,dharma_scas2],dim='time')
     dharma_scas = dharma_scas.drop_duplicates('time',keep='first')
     #dharma_scas
@@ -273,6 +308,8 @@ def DHARMA_convert(path,output_filename,verbose=False):
             vars_mean_list.model_name.iat[index] = 'opd_tot'
         if standard_name=='optical_depth_of_liquid_cloud': 
             vars_mean_list.model_name.iat[index] = 'opd_cloud'
+        if standard_name=='condensate_weighted_cloud_droplet_number_concentration': 
+            vars_mean_list.model_name.iat[index] = 'nqc'
         if standard_name=='precipitation_flux_at_surface': 
             vars_mean_list.model_name.iat[index] = 'avg_precip'
             vars_mean_list.conv_factor.iat[index] = 1/3600.
