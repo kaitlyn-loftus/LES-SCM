@@ -52,7 +52,7 @@ def ModelE_convert(path,output_filename,verbose=False):
 
     # specify Github scratch directory where processed model output will be committed
     my_output_filename = my_output_suffix
-    my_gitdir = '/home/tflorian/LES-SCM/output_scm/modele/'
+    my_gitdir = '/discover/nobackup/tflorian/LES-SCM/output_scm/modele/'
     
     # Read single file containing all output data
     input_filename = my_input_dir + path + '/allsteps.allmerge' + my_input_suffix + '.nc'
@@ -160,10 +160,14 @@ def ModelE_convert(path,output_filename,verbose=False):
                 vars_mean_list.conv_factor.iat[index] = 0.001
         if standard_name=='area_fraction_cover_of_hydrometeors': 
             vars_mean_list.model_name.iat[index] = 'cldtot_2d'
+            vars_mean_list.conv_factor.iat[index] = 0.01
     #    if standard_name=='area_fraction_cover_of_liquid_cloud': 
     #        vars_mean_list.model_name.iat[index] = ''
         if standard_name=='area_fraction_cover_of_convective_hydrometeors': 
             vars_mean_list.model_name.iat[index] = 'cldmc_2d'
+        if standard_name=='cloud_area_fraction': 
+            vars_mean_list.model_name.iat[index] = 'cldtot_2d'
+            vars_mean_list.conv_factor.iat[index] = 0.01
         if standard_name=='optical_depth': 
             vars_mean_list.model_name.iat[index] = 'tau'
     #    if standard_name=='optical_depth_of_liquid_water': 

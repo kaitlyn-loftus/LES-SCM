@@ -52,12 +52,12 @@ def DHARMA_convert(path,output_filename,verbose=False,time_resample='600s'):
 
     my_rundir = '/home/tflorian/nobackup/dharma_run/cao_2018/' + my_readdir + '/'
 
-    my_outdirs = sorted([f for f in os.listdir(my_rundir) if f.endswith('h')], key=str.lower)
+    my_outdirs = sorted([f for f in os.listdir(my_rundir) if (f.endswith('h') and '-' in f)], key=str.lower)
     if verbose:
         print(my_outdirs)
 
     # specify Github scratch directory where processed model output will be committed
-    my_gitdir = '/home/tflorian/LES-SCM/output_les/dharma/'
+    my_gitdir = '/discover/nobackup/tflorian/LES-SCM/output_les/dharma/'
     
     # read in set-up parameters
     ####################################################### 
@@ -509,6 +509,7 @@ def DHARMA_convert(path,output_filename,verbose=False,time_resample='600s'):
     # create and fill variables
     for index in vars_mean_list.index[2:]:
         std_name = vars_mean_list.standard_name.iat[index]
+    #    print(std_name)
     #   print(std_name) # debug
         var_name = vars_mean_list.variable_id.iat[index]
         mod_name = vars_mean_list.model_name.iat[index]

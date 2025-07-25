@@ -33,15 +33,15 @@ def toffset(case):
     if case == '20200301':
         t_off = 9. #11.
     if case == '20210203':
-        t_off = 13.
+        t_off = 2.
     if case == '20220111':
         t_off = 10.
     if case == '20220118':
-        t_off = 2.
+        t_off = 8.
     if case == '20220313':
-        t_off = 6.
+        t_off = 7.
     if case == '20220329':
-        t_off = 0.
+        t_off = 8.
         
     return t_off
 
@@ -275,22 +275,21 @@ def load_goes(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_files
     data = pd.read_csv(PATH + file)
     
     ## exclude greater temperoral offsets
-    data = data.loc[abs(data['tdiff']) <= t_filter]
+    #data = data.loc[abs(data['tdiff']) <= t_filter]
     
     ## exclude highly uncertain data points
     #data = data.loc[data['cod'].notna()]
     data.loc[data['cod'].isna(),['cod','cod.25','cod.75','cc','cc.25','cc.75']] = np.nan 
-
     
     ## exclude bispectral retrievals under high SZA
-    data.loc[data['sza'] > sza_filter,['cod','cod.25','cod.75','cc','cc.25','cc.75']] = np.nan 
+    data.loc[data['sza'] > sza_filter,['cod','cod.25','cod.75']] = np.nan 
 
     ## exclude values obtained during high-cloud influence
     #data.loc[(data['time.rel'] + t_off) < 3,['ctt','cth']] = np.nan 
     data.loc[data['cth'] > 8000,['ctt','cth']] = np.nan 
     
     data['time'] = (data['time.rel'] + t_off)*3600.
-    #data['cth'] = data['cth']*1000.
+    data['cth'] = np.nan*data['cth']
     #data['zi.25'] = data['cth.25']
     #data['zi.75'] = data['cth.75']
     data.index = data['time']
@@ -303,7 +302,7 @@ def load_goes(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_files
         data['clt.25'] = data['cc.025']
         data['clt.75'] = data['cc.975']
      
-    data['class'] = data['sat']
+    data['class'] = 'GOES16' #data['sat']
     return data
 
 def load_modis(case='20200313',t_filter = 1.,sza_filter = 80.,PATH='../data_files/'):
@@ -395,40 +394,19 @@ def load_activate_insitu(case='20200313',PATH='../data_files/'):
     ## case........string of COMBLE date
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
+
     
-    if case == '20200301':
-        file = 'activate_2020-03-01_satdat.csv'
-        t_off = 7. #11.
-    if case == '20210203':
-        file = 'goes_2021-02-03_satdat.csv'
-        t_off = 13.
-    if case == '20220111':
-        file = 'goes_2022-01-11_satdat.csv'
-        t_off = 10.
-    if case == '20220118':
-        file = 'goes_2022-01-18_satdat.csv'
-        t_off = 2.
-    if case == '20220313':
-        file = 'goes_2022-03-13_satdat.csv'
-        t_off = 6.
-    if case == '20220329':
-        file = 'goes_2022-03-29_satdat.csv'
-        t_off = 0.
-    
+    file = 'activate_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
+  
     data = pd.read_csv(PATH + file)
+    #print(data)
     
     data['time'] = data['sim.time.new']*3600.
-    data['zi'] = data['cth']
-    ata['zi.25'] = data['cth.low']
-    data['zi.75'] = data['cth.high']
-    data['ctt'] = data['ctt']
-    ata['ctt.25'] = data['ctt.low']
-    data['ctt.75'] = data['ctt.high']
     data.index = data['time']
     #data['cod'] = data['cod.me']
-    data['od'] = data['tau']
-    data['od.25'] = data['tau.low']
-    data['od.75'] = data['tau.high']
+    data['nqc'] = data['Nqc']
+    data['nqc.25'] = data['Nd.low']
+    data['nqc.75'] = data['Nd.high']
      
     data['class'] = data['sat']
     return data
@@ -441,28 +419,14 @@ def load_activate_dropsonde(case='20200313',PATH='../data_files/'):
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200301':
-        file = 'activate_drop_2020-03-01_satdat.csv'
-        t_off = 9. #11.
-    if case == '20210203':
-        file = 'goes_2021-02-03_satdat.csv'
-        t_off = 13.
-    if case == '20220111':
-        file = 'goes_2022-01-11_satdat.csv'
-        t_off = 10.
-    if case == '20220118':
-        file = 'goes_2022-01-18_satdat.csv'
-        t_off = 2.
-    if case == '20220313':
-        file = 'goes_2022-03-13_satdat.csv'
-        t_off = 6.
-    if case == '20220329':
-        file = 'goes_2022-03-29_satdat.csv'
-        t_off = 0.
+    file = 'activate_drop_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
     
     data = pd.read_csv(PATH + file)
     
     data['time'] = np.round(data['time.sim'])*3600.
+    
+    data.loc[np.abs(data['u'])>100.,['u']] = np.nan     
+    data.loc[np.abs(data['v'])>100.,['v']] = np.nan 
     
     data['zf'] = data['h']
     data['qv'] = data['qv']/1000.
@@ -483,24 +447,7 @@ def load_activate_remote(case='20200313',PATH='../data_files/'):
     ## t_filter....time window around arrival of trajectory (hours)
     ## PATH........directory
     
-    if case == '20200301':
-        file = 'activate2stat_2020-03-01_satdat.csv'
-        t_off = 9. #11.
-    if case == '20210203':
-        file = 'goes_2021-02-03_satdat.csv'
-        t_off = 13.
-    if case == '20220111':
-        file = 'goes_2022-01-11_satdat.csv'
-        t_off = 10.
-    if case == '20220118':
-        file = 'goes_2022-01-18_satdat.csv'
-        t_off = 2.
-    if case == '20220313':
-        file = 'goes_2022-03-13_satdat.csv'
-        t_off = 6.
-    if case == '20220329':
-        file = 'goes_2022-03-29_satdat.csv'
-        t_off = 0.
+    file = 'activate2stat_' + case[0:4] + '-' + case[4:6] + '-' + case[6:8] + '_satdat.csv'
     
     data = pd.read_csv(PATH + file)
     
@@ -516,9 +463,9 @@ def load_activate_remote(case='20200313',PATH='../data_files/'):
     data['od'] = data['tau']
     data['od.25'] = data['tau.low']
     data['od.75'] = data['tau.high']
-    data['nd'] = data['Nd']
-    data['nd.25'] = data['Nd.low']
-    data['nd.75'] = data['Nd.high']
+    data['nqc'] = data['Nd']
+    data['nqc.25'] = data['Nd.low']
+    data['nqc.75'] = data['Nd.high']
      
     data['class'] = data['sat']
     return data
@@ -1435,11 +1382,11 @@ def plot_1d(df_col,var_vec,**kwargs):
                 obj = axs
             else:
                 obj = axs[ii]
-            if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') | (label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX') | (label=='Bulk') | (label=='ECOR')| (label=='CARRA'):
+            if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') | (label=='ACTIVATE (in-situ)')| (label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX') | (label=='Bulk') | (label=='ECOR')| (label=='CARRA'):
                 obj.scatter(df.time/3600,df[var_vec[ii]],label=label,c='k',marker=plot_symbol[counter_symbol])
                 #print(label)
                 #print(df[var_vec[ii]])
-                if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') |(label=='VIIRS') | (label=='MODIS') | (label=='CERES')| (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA'):
+                if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') | (label=='ACTIVATE (in-situ)')| (label=='VIIRS') | (label=='MODIS') | (label=='CERES')| (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA'):
                     if np.count_nonzero(np.isnan(df[var_vec[ii]])) < len(df[var_vec[ii]]):
                         error_1 = np.abs(df[var_vec[ii]] - df[var_vec[ii]+'.25'])
                         error_2 = np.abs(df[var_vec[ii]+'.75'] - df[var_vec[ii]])
@@ -1469,7 +1416,7 @@ def plot_1d(df_col,var_vec,**kwargs):
                     obj.text(.01, .99, longnames[ii]+unit_str, ha='left', va='top', transform=obj.transAxes)
         counter +=1
         if not df['colflag'].unique() == 'gray':  counter_plot +=1
-        if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') |(label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA') | (label=='ERA5'): counter_plot -=1    
+        if (label=='MAC-LWP') | (label=='GOES16') | (label=='ACTIVATE (remote sensing)') | (label=='ACTIVATE (in-situ)')| (label=='MODIS') | (label=='VIIRS') | (label=='CERES') | (label=='SENTINEL') | (label=='KAZR (Kollias)')| (label=='KAZR (Clough)')| (label=='CALIOP')| (label=='ATMS')| (label=='RADFLUX')| (label=='Bulk') | (label=='ECOR') | (label=='CARRA') | (label=='ERA5'): counter_plot -=1    
         #print(counter_plot)
     i_count = 0
 
